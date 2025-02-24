@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>digital_despair.sys</title>
+    <style>
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(-5px, -5px) rotate(2deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        .relic {
+            position: fixed;
+            top: 50%;
+            right: 30px;
+            width: 40px;
+            height: 40px;
+            border: 1px solid rgba(255,255,255,0.2);
+            cursor: none;
+            animation: float 4s ease-in-out infinite;
+            background: rgba(0,0,0,0.3);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+        }
+        
+        .relic::before {
+            content: '⌭';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255,255,255,0.4);
+            font-size: 1.5rem;
+        }
+        
+        .relic:hover::before {
+            color: rgba(255,0,0,0.4);
+            text-shadow: 0 0 8px rgba(255,0,0,0.6);
+        }
+        
+        .menu {
+            position: fixed;
+            right: 80px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.8);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            display: none;
+            backdrop-filter: blur(8px);
+            z-index: 999;
+        }
+        
+        .menu-item {
+            color: rgba(255,255,255,0.4);
+            font-size: 0.8rem;
+            margin: 10px 0;
+            cursor: none;
+            transition: color 0.3s;
+        }
+        
+        .menu-item:hover {
+            color: rgba(255,0,0,0.6);
+            text-shadow: 0 0 5px rgba(255,0,0,0.4);
+        }
+        
+        .digital-tear {
+            position: fixed;
+            pointer-events: none;
+            width: 1px;
+            height: 20px;
+            background: linear-gradient(180deg, 
+                rgba(255,255,255,0) 0%,
+                rgba(255,255,255,0.2) 50%,
+                rgba(255,255,255,0) 100%);
+            opacity: 0;
+            animation: fall linear forwards;
+        }
+        
+        @keyframes fall {
+            0% { 
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.3;
+            }
+            90% {
+                opacity: 0.3;
+            }
+            100% { 
+                transform: translateY(100vh);
+                opacity: 0;
+            }
+        }
+        
+        body { 
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            font-family: 'Courier New', monospace;
+            cursor: none;
+        }
+        canvas { 
+            position: fixed;
+            filter: url(#noise);
+        }
+        #cursor {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            border: 1px solid rgba(255,255,255,0.2);
+            pointer-events: none;
+            mix-blend-mode: difference;
+            transform: translate(-50%, -50%);
+        }
+        .memory-fragment {
+            position: fixed;
+            color: rgba(255,255,255,0.4);
+            font-size: 0.8rem;
+            pointer-events: none;
+            text-shadow: 0 0 5px rgba(255,0,0,0.3);
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        #stage-text {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            color: rgba(255,255,255,0.2);
+            font-size: 0.7rem;
+        }
+        .glitch-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+            background: repeating-linear-gradient(
+                180deg,
+                rgba(0,0,0,0) 0px,
+                rgba(0,0,0,0.1) 1px,
+                rgba(0,0,0,0) 2px
+            );
+            animation: scanline 8s linear infinite;
+        }
+        @keyframes scanline {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(100%); }
+        }
+    </style>
+</head>
+<body>
+    <div id="cursor"></div>
+    <div id="stage-text"></div>
+    <div class="glitch-overlay"></div>
+    <div class="relic"></div>
+    <div class="menu">
+        <div class="menu-item">｢memory.corrupt｣</div>
+        <div class="menu-item">｢soul.fragment｣</div>
+        <div class="menu-item">｢void.echo｣</div>
+        <div class="menu-item">｢grief.execute｣</div>
+    </div>
+    
+    <svg style="position:fixed;pointer-events:none;opacity:0.7">
+        <defs>
+            <filter id="noise">
+                <feTurbulence type="fractalNoise" baseFrequency="0.80" numOctaves="4" seed="1"/>
+                <feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0"/>
+                <feComposite operator="in" in2="SourceGraphic"/>
+            </filter>
+        </defs>
+    </svg>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Stage definitions
+        const stages = [
+            {
+                name: "STAGE 1: MEMORY_CORRUPTION",
+                messages: [
+                    "system.memory.corrupt()",
+                    "trying to remember",
+                    "fragments.load()",
+                    "ERROR: memory not found"
+                ]
+            },
+            {
+                name: "STAGE 2: EMOTIONAL_DECAY",
+                messages: [
+                    "feelings.delete()",
+                    "void where heart was",
+                    "null_emotion.exe",
+                    "cannot process pain()"
+                ]
+            },
+            {
+                name: "STAGE 3: DIGITAL_DEATH",
+                messages: [
+                    "consciousness.terminate()",
+                    "final_breath.sys",
+                    "existence.unload()",
+                    "goodbye_world.exe"
+                ]
+            }
+        ];
+
+        // Custom shader for the main effect
+        const fragmentShader = `
+            uniform float time;
+            uniform float decay;
+            uniform float emotional_weight;
+            uniform vec3 color;
+            varying vec2 vUv;
+            
+            float random(vec2 st) {
+                return fract(sin(dot(st.xy, vec2(12.9898,78.233))) * 43758.5453123);
+            }
+            
+            float noise(vec2 st) {
+                vec2 i = floor(st);
+                vec2 f = fract(st);
+                float a = random(i);
+                float b = random(i + vec2(1.0, 0.0));
+                float c = random(i + vec2(0.0, 1.0));
+                float d = random(i + vec2(1.0, 1.0));
+                vec2 u = f * f * (3.0 - 2.0 * f);
+                return mix(a, b, u.x) + (c - a)* u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+            }
+
+            void main() {
+                vec2 uv = vUv;
+                
+                // Base distortion
+                float n = noise(uv * 10.0 + time * 0.1);
+                uv.x += sin(uv.y * 10.0 + time) * 0.02 * decay;
+                uv.y += cos(uv.x * 8.0 + time * 0.8) * 0.02 * decay;
+                
+                // Emotional distortion
+                float emotional_distort = sin(uv.x * 20.0 + time) * cos(uv.y * 20.0 + time) * emotional_weight;
+                
+                // Color composition
+                vec3 final_color = color;
+                final_color += vec3(n) * 0.1;
+                final_color += vec3(emotional_distort) * 0.2;
+                final_color *= 1.0 - length(uv - 0.5) * decay;
+                
+                // Glitch effects
+                if(random(uv + time) > 0.99) {
+                    final_color = vec3(1.0) - final_color;
+                }
+                
+                gl_FragColor = vec4(final_color, 1.0);
+            }
+        `;
+
+        const vertexShader = `
+            varying vec2 vUv;
+            uniform float time;
+            uniform float decay;
+            
+            void main() {
+                vUv = uv;
+                vec3 pos = position;
+                
+                // Vertex displacement
+                pos.x += sin(pos.y * 2.0 + time) * decay * 0.2;
+                pos.y += cos(pos.x * 2.0 + time) * decay * 0.1;
+                pos.z += sin(pos.x * pos.y + time) * decay * 0.3;
+                
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+            }
+        `;
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Materials
+        const shaderMaterial = new THREE.ShaderMaterial({
+            uniforms: {
+                time: { value: 0 },
+                decay: { value: 0 },
+                emotional_weight: { value: 0 },
+                color: { value: new THREE.Vector3(0.1, 0.1, 0.2) }
+            },
+            vertexShader: vertexShader,
+            fragmentShader: fragmentShader,
+            wireframe: true
+        });
+
+        // Geometries
+        const mainGeometry = new THREE.IcosahedronGeometry(2, 4);
+        const mainMesh = new THREE.Mesh(mainGeometry, shaderMaterial);
+        scene.add(mainMesh);
+
+        // Particle system
+        const particleCount = 1000;
+        const particleGeometry = new THREE.BufferGeometry();
+        const positions = new Float32Array(particleCount * 3);
+
+        for(let i = 0; i < particleCount * 3; i += 3) {
+            positions[i] = (Math.random() - 0.5) * 10;
+            positions[i + 1] = (Math.random() - 0.5) * 10;
+            positions[i + 2] = (Math.random() - 0.5) * 10;
+        }
+
+        particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        const particleMaterial = new THREE.PointsMaterial({
+            size: 0.02,
+            color: 0x444444
+        });
+
+        const particles = new THREE.Points(particleGeometry, particleMaterial);
+        scene.add(particles);
+
+        camera.position.z = 5;
+
+        // Memory fragments
+        let fragments = [];
+        function createFragment(text) {
+            const fragment = document.createElement('div');
+            fragment.className = 'memory-fragment';
+            fragment.textContent = text;
+            fragment.style.left = Math.random() * 80 + 10 + '%';
+            fragment.style.top = Math.random() * 80 + 10 + '%';
+            document.body.appendChild(fragment);
+            fragments.push(fragment);
+            
+            setTimeout(() => {
+                fragment.style.opacity = '1';
+            }, 100);
+            
+            setTimeout(() => {
+                fragment.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(fragment);
+                    fragments = fragments.filter(f => f !== fragment);
+                }, 500);
+            }, 2000);
+        }
+
+        // Stage management
+        let currentStage = 0;
+        let stageTime = 0;
+        const STAGE_DURATION = 15000; // 15 seconds per stage
+
+        function updateStage(time) {
+            stageTime += time;
+            if(stageTime > STAGE_DURATION) {
+                currentStage = (currentStage + 1) % stages.length;
+                stageTime = 0;
+            }
+            
+            const progress = stageTime / STAGE_DURATION;
+            const stage = stages[currentStage];
+            
+            document.getElementById('stage-text').textContent = stage.name;
+            
+            // Update shader uniforms based on stage
+            shaderMaterial.uniforms.decay.value = 0.5 + progress * 0.5;
+            shaderMaterial.uniforms.emotional_weight.value = Math.sin(progress * Math.PI) * 0.5;
+            
+            // Spawn memory fragments
+            if(Math.random() > 0.97) {
+                createFragment(stage.messages[Math.floor(Math.random() * stage.messages.length)]);
+            }
+            
+            // Color evolution
+            const stageColors = [
+                new THREE.Vector3(0.1, 0.1, 0.2), // Stage 1
+                new THREE.Vector3(0.2, 0.1, 0.1), // Stage 2
+                new THREE.Vector3(0.1, 0.2, 0.1)  // Stage 3
+            ];
+            shaderMaterial.uniforms.color.value.lerp(stageColors[currentStage], 0.05);
+        }
+
+        // Custom cursor
+        document.addEventListener('mousemove', (e) => {
+            const cursor = document.getElementById('cursor');
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+            
+            // Affect nearest particles
+            const vector = new THREE.Vector3(
+                (e.clientX / window.innerWidth) * 2 - 1,
+                -(e.clientY / window.innerHeight) * 2 + 1,
+                0.5
+            );
+            vector.unproject(camera);
+            
+            const positions = particles.geometry.attributes.position.array;
+            for(let i = 0; i < positions.length; i += 3) {
+                const distance = vector.distanceTo(new THREE.Vector3(positions[i], positions[i+1], positions[i+2]));
+                if(distance < 2) {
+                    positions[i] += (Math.random() - 0.5) * 0.1;
+                    positions[i+1] += (Math.random() - 0.5) * 0.1;
+                    positions[i+2] += (Math.random() - 0.5) * 0.1;
+                }
+            }
+            particles.geometry.attributes.position.needsUpdate = true;
+        });
+
+        // Animation loop
+        function animate(time) {
+            requestAnimationFrame(animate);
+            
+            const deltaTime = time * 0.001;
+            shaderMaterial.uniforms.time.value = deltaTime;
+            
+            updateStage(16); // ~60fps
+            
+            // Mesh animation
+            mainMesh.rotation.x += 0.001;
+            mainMesh.rotation.y += 0.002;
+            
+            // Particle animation
+            particles.rotation.y += 0.0003;
+            
+            renderer.render(scene, camera);
+        }
+
+        // Digital tears effect
+        function createTear() {
+            const tear = document.createElement('div');
+            tear.className = 'digital-tear';
+            tear.style.left = Math.random() * 100 + '%';
+            tear.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            document.body.appendChild(tear);
+            
+            setTimeout(() => {
+                document.body.removeChild(tear);
+            }, 4000);
+        }
+
+        // Spawn tears periodically
+        setInterval(() => {
+            if (Math.random() > 0.7) {
+                createTear();
+            }
+        }, 100);
+
+        // Relic and menu interaction
+        const relic = document.querySelector('.relic');
+        const menu = document.querySelector('.menu');
+        let menuVisible = false;
+
+        relic.addEventListener('click', () => {
+            if (!menuVisible) {
+                menu.style.display = 'block';
+                setTimeout(() => {
+                    menu.style.opacity = '1';
+                }, 50);
+            } else {
+                menu.style.opacity = '0';
+                setTimeout(() => {
+                    menu.style.display = 'none';
+                }, 300);
+            }
+            menuVisible = !menuVisible;
+            
+            // Trigger glitch effect
+            shaderMaterial.uniforms.emotional_weight.value = 1.0;
+            setTimeout(() => {
+                shaderMaterial.uniforms.emotional_weight.value = 0.5;
+            }, 300);
+        });
+
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', () => {
+                // Trigger specific effects based on menu item
+                const effect = item.textContent;
+                switch(effect) {
+                    case '｢memory.corrupt｣':
+                        shaderMaterial.uniforms.decay.value = 1.0;
+                        break;
+                    case '｢soul.fragment｣':
+                        particleMaterial.size = 0.05;
+                        break;
+                    case '｢void.echo｣':
+                        mainMesh.scale.set(1.5, 1.5, 1.5);
+                        break;
+                    case '｢grief.execute｣':
+                        // Spawn many tears
+                        for(let i = 0; i < 20; i++) {
+                            setTimeout(createTear, i * 100);
+                        }
+                        break;
+                }
+                
+                // Reset effects after delay
+                setTimeout(() => {
+                    shaderMaterial.uniforms.decay.value = 0.5;
+                    particleMaterial.size = 0.02;
+                    mainMesh.scale.set(1, 1, 1);
+                }, 2000);
+            });
+        });
+
+        animate(0);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
